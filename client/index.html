@@ -26,14 +26,14 @@
   <body>
     <div id="main">
       <h1>chatterbox</h1>
-      <form>
-        <input type='textarea' name='newMessage'>
-        <input type='submit'>
+      <form id="send">
+        <textarea row='5' col='30' id='message' placeholder='Enter text here...'></textarea>
+        <input type="submit" class="submit">
+<!--         <button type="submit" class="submit" onclick="return false">Submit</button> -->
       </form>
-      <select id='chatroomMenu'>
-        <option>lobby</option>
+      <select id="roomSelect">
+        <option>All</option>
       </select>
-      <!-- Your HTML goes here! -->
     </div>
     <div id="chats"></div>
   </body>

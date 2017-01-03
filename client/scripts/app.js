@@ -1,46 +1,50 @@
-$(document).ready(function() {
-  getMessages();
+var app = {};
+app.server = 'https://api.parse.com/1/classes/messages?' + encodeURIComponent('order=-createdAt');
+app.friends = [];
+
+app.init = function () {
+  app.fetch();
 
   $('form').submit(function(event) { 
+    //debugger;
     event.preventDefault();
-    // console.log($('input[name=newMessage]').val());
-    var newMessage = $('input[name=newMessage]').val();
-    var message = {
-      username: window.location.search.slice(10),
-      text: newMessage,
-      roomname: 'lobby'
-    };
-    submitMessage(message);
-    $('.chat').remove();
-    getMessages();
+    app.handleSubmit();
   });
+  // $('.submit').on('click', function(event) {
+  //   event.preventDefault();
+  //   app.handleSubmit();
+  // });
 
+};
 
-});
+app.createMessage = function (chat) {
+  var message = '<span class="username">' + chat.username + '</span>';
+  message += ' - ' + chat.updatedAt + '<br>';
+  message += chat.text + '<br>';
+  message += chat.roomname;
+  $('#chats').append('<div class="chat">' + message + '</div>');          
+};
 
-
-var received;
-
-var getMessages = function() {
-  var chatroom = 'asdf';
+app.fetch = function() {
+  var chatroom = 'lobby';
+  var query = encodeURIComponent('order=-createdAt');
   $.ajax({
-    url: 'https://api.parse.com/1/classes/messages?' + encodeURIComponent('order=-createdAt'),
+    url: this.server,
     // url: 'https://api.parse.com/1/classes/messages?' + encodeURIComponent({where: JSON.stringify({roomname: chatroom, order: '-createdAt'})}),
+    // advance url for filtering on chatroom
     type: 'GET',
     contentType: 'application/json',
     success: function (data) {
-      received = data.results;
+      var received = data.results;
       for (var i = 0, counter = 0; i < 99 && counter < 21; i++) {
-        if (received[i].roomname === chatroom) {
-          var message = '<span class="username">' + received[i].username + '</span>';
-          message += ' - ' + received[i].updatedAt + '<br>';
-          message += received[i].text + '<br>';
-          message += received[i].roomname;
-
-          $('#chats').append('<div class="chat">' + message + '</div>');          
+        if (chatroom === 'All' || received[i].roomname === chatroom) {
+          app.createMessage(received[i]);
           counter++;
         }
       }
+      $('.username').click(function() {
+        app.handleUsernameClick();
+      });
       console.log('chatterbox: Messages received', data);
     },
     error: function (data) {
@@ -49,12 +53,8 @@ var getMessages = function() {
   });
 };
 
-
-
-
-var submitMessage = function(message) {
+app.send = function(message) {
   $.ajax({
-    // This is the url you should use to communicate with the parse API server.
     url: 'https://api.parse.com/1/classes/messages',
     type: 'POST',
     data: JSON.stringify(message),
@@ -63,11 +63,55 @@ var submitMessage = function(message) {
       console.log('chatterbox: Message sent', data);
     },
     error: function (data) {
-      // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
       console.error('chatterbox: Failed to send message', data);
     }
   });
 };
 
+app.clearMessages = function() {
+  $('#chats').html('');
+};
+
+app.renderMessage = function(message) {
+  this.send(message);
+  $('#chats').prepend('<div class="chat">' + message + '</div>');
+};
+
+app.renderRoom = function(room) {
+  $('#roomSelect').append('<option>' + room + '</option>');
+};
+
+app.handleSubmit = function() {
+  console.log('handleSubmit called');
+  var newMessage = $('#message').val();
+  var message = {
+    username: window.location.search.slice(10),
+    text: newMessage,
+    roomname: 'lobby'
+  };
+  this.renderMessage(message);   
+  $('.chat').remove();
+  this.fetch(); 
+};
+
+app.handleUsernameClick = function() {
+  console.log('testestestes');
+};
 
 
+$(document).ready(function() {
+  app.init();
+});
+
+
+// TODO:
+// !-show room names
+// -select chat rooms
+// -filter by chat room
+//   -make a default (all rooms)
+//   -find unique chat rooms, add to options
+//   -add a chatroom function
+// -fix the dates
+// -make it safer
+// -make it prettier
+// -automatically update it
