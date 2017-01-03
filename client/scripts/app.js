@@ -10,14 +10,27 @@ app.init = function () {
 
 app.createMessage = function (chat) {
   var message = '<span class="username">' + chat.username + '</span>';
-  message += ' - ' + chat.updatedAt + '<br>';
+  message += ' - ' + app.convertTime(chat.updatedAt) + '<br>';
   message += chat.text + '<br>';
-  message += chat.roomname;
+  message += '<span class="roomname">' + chat.roomname + '</span>';
   if (this.friends[chat.username]) {
     $('#chats').append('<div class="chat friend">' + message + '</div>');          
   } else {
     $('#chats').append('<div class="chat">' + message + '</div>');          
   }
+};
+
+app.convertTime = function(time) {
+  var timestamp = new Date(time);
+  var timeString = '';
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  timeString += months[timestamp.getMonth()];
+  timeString += ' ' + timestamp.getDate();
+  timeString += ', ' + timestamp.getFullYear();
+  timeString += ' ' + timestamp.getHours();
+  timeString += ':' + timestamp.getMinutes();
+  timeString += ':' + timestamp.getSeconds();
+  return timeString;
 };
 
 app.fetch = function() {
@@ -42,7 +55,7 @@ app.fetch = function() {
 
         app.handleUsernameClick(user);
       });
-
+      $('#roomSelect').children().remove();
       _.each(app.chatrooms, function(val, room) {
         app.renderRoom(room);
       });
@@ -82,7 +95,7 @@ app.renderMessage = function(message) {
 };
 
 app.renderRoom = function(room) {
-  $('#roomSelect').append('<option>' + room + '</option>');
+  $('#roomSelect').append('<option value=' + JSON.stringify(room) + '>' + room + '</option>');
 };
 
 app.handleSubmit = function() {
@@ -113,6 +126,14 @@ $(document).ready(function() {
     event.preventDefault();
     app.handleSubmit();
   });
+
+  $('#roomSelect').change(function(event) {
+    console.log(event);
+  });
+
+  // $('[id=roomSelect] option').filter(function() {
+  //   return ($(this).value === 'All');
+  // }).prop('selected', true);
 });
 
 

@@ -88,3 +88,8 @@ form input[type=text] {
     background-color: #0090da;
 }
 
+.chat .roomname {
+    color: blue;
+    font-size: 12px;
+}
+
