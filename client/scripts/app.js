@@ -1,6 +1,6 @@
 var app = {};
-app.server = 'https://api.parse.com/1/classes/messages?' + encodeURIComponent('order=-createdAt');
-app.friends = [];
+app.server = 'https://api.parse.com/1/classes/messages';
+app.friends = {};
 
 app.init = function () {
   app.fetch();
@@ -22,16 +22,20 @@ app.createMessage = function (chat) {
   message += ' - ' + chat.updatedAt + '<br>';
   message += chat.text + '<br>';
   message += chat.roomname;
-  $('#chats').append('<div class="chat">' + message + '</div>');          
+  if (this.friends[chat.username]) {
+    $('#chats').append('<div class="chat friend">' + message + '</div>');          
+  } else {
+    $('#chats').append('<div class="chat">' + message + '</div>');          
+  }
 };
 
 app.fetch = function() {
   var chatroom = 'lobby';
-  var query = encodeURIComponent('order=-createdAt');
   $.ajax({
     url: this.server,
     // url: 'https://api.parse.com/1/classes/messages?' + encodeURIComponent({where: JSON.stringify({roomname: chatroom, order: '-createdAt'})}),
     // advance url for filtering on chatroom
+    data: {order: '-createdAt'},
     type: 'GET',
     contentType: 'application/json',
     success: function (data) {
@@ -43,7 +47,9 @@ app.fetch = function() {
         }
       }
       $('.username').click(function() {
-        app.handleUsernameClick();
+        var user = $(this).html();
+
+        app.handleUsernameClick(user);
       });
       console.log('chatterbox: Messages received', data);
     },
@@ -55,7 +61,7 @@ app.fetch = function() {
 
 app.send = function(message) {
   $.ajax({
-    url: 'https://api.parse.com/1/classes/messages',
+    url: this.server,
     type: 'POST',
     data: JSON.stringify(message),
     contentType: 'application/json',
@@ -94,8 +100,11 @@ app.handleSubmit = function() {
   this.fetch(); 
 };
 
-app.handleUsernameClick = function() {
-  console.log('testestestes');
+app.handleUsernameClick = function(user) {
+  console.log('inside handleUsernameClick', user);
+  this.friends[user] = user;
+  $('.chat').remove();
+  this.fetch();
 };
 
 
