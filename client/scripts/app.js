@@ -1,20 +1,11 @@
 var app = {};
 app.server = 'https://api.parse.com/1/classes/messages';
 app.friends = {};
+app.selectedRoom = 'All';
+app.chatrooms = {All: true};
 
 app.init = function () {
   app.fetch();
-
-  $('form').submit(function(event) { 
-    //debugger;
-    event.preventDefault();
-    app.handleSubmit();
-  });
-  // $('.submit').on('click', function(event) {
-  //   event.preventDefault();
-  //   app.handleSubmit();
-  // });
-
 };
 
 app.createMessage = function (chat) {
@@ -30,7 +21,6 @@ app.createMessage = function (chat) {
 };
 
 app.fetch = function() {
-  var chatroom = 'lobby';
   $.ajax({
     url: this.server,
     // url: 'https://api.parse.com/1/classes/messages?' + encodeURIComponent({where: JSON.stringify({roomname: chatroom, order: '-createdAt'})}),
@@ -41,16 +31,22 @@ app.fetch = function() {
     success: function (data) {
       var received = data.results;
       for (var i = 0, counter = 0; i < 99 && counter < 21; i++) {
-        if (chatroom === 'All' || received[i].roomname === chatroom) {
+        app.chatrooms[received[i].roomname] = true;
+        if (app.selectedRoom === 'All' || received[i].roomname === app.selectedRoom) {
           app.createMessage(received[i]);
           counter++;
         }
       }
-      $('.username').click(function() {
+      $('.username').on('click', function() {
         var user = $(this).html();
 
         app.handleUsernameClick(user);
       });
+
+      _.each(app.chatrooms, function(val, room) {
+        app.renderRoom(room);
+      });
+
       console.log('chatterbox: Messages received', data);
     },
     error: function (data) {
@@ -58,6 +54,8 @@ app.fetch = function() {
     }
   });
 };
+
+
 
 app.send = function(message) {
   $.ajax({
@@ -88,7 +86,6 @@ app.renderRoom = function(room) {
 };
 
 app.handleSubmit = function() {
-  console.log('handleSubmit called');
   var newMessage = $('#message').val();
   var message = {
     username: window.location.search.slice(10),
@@ -101,20 +98,30 @@ app.handleSubmit = function() {
 };
 
 app.handleUsernameClick = function(user) {
-  console.log('inside handleUsernameClick', user);
   this.friends[user] = user;
   $('.chat').remove();
   this.fetch();
+  console.log('username clicked');
 };
 
 
 $(document).ready(function() {
   app.init();
+
+  $('form').submit(function(event) {
+    //debugger;
+    event.preventDefault();
+    app.handleSubmit();
+  });
 });
+
 
 
 // TODO:
 // !-show room names
+// !-add friendslist
+//   !-make usernames clickable
+//   !-make friend chats highlight
 // -select chat rooms
 // -filter by chat room
 //   -make a default (all rooms)
