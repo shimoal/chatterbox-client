@@ -9,10 +9,11 @@ app.init = function () {
 };
 
 app.createMessage = function (chat) {
-  var message = '<span class="username">' + chat.username + '</span>';
+  var message = '<span class="username">' + app.escape(chat.username) + '</span>';
   message += ' - ' + app.convertTime(chat.updatedAt) + '<br>';
-  message += chat.text + '<br>';
-  message += '<span class="roomname">' + chat.roomname + '</span>';
+  message += app.escape(chat.text) + '<br>';
+  message += '<span class="roomname">' + app.escape(chat.roomname) + '</span>';
+  // message = app.escape(message);
   if (this.friends[chat.username]) {
     $('#chats').append('<div class="chat friend">' + message + '</div>');          
   } else {
@@ -43,7 +44,7 @@ app.fetch = function() {
     contentType: 'application/json',
     success: function (data) {
       var received = data.results;
-      for (var i = 0, counter = 0; i < 99 && counter < 21; i++) {
+      for (var i = 0, counter = 0; i < data.results.length && counter < 20; i++) {
         app.chatrooms[received[i].roomname] = true;
         if (app.selectedRoom === 'All' || received[i].roomname === app.selectedRoom) {
           app.createMessage(received[i]);
@@ -57,7 +58,7 @@ app.fetch = function() {
       });
       $('#roomSelect').children().remove();
       _.each(app.chatrooms, function(val, room) {
-        app.renderRoom(room);
+        app.renderRoom(app.escape(room));
       });
 
       console.log('chatterbox: Messages received', data);
@@ -101,13 +102,20 @@ app.renderRoom = function(room) {
 app.handleSubmit = function() {
   var newMessage = $('#message').val();
   var message = {
-    username: window.location.search.slice(10),
+    username: app.escape(window.location.search.slice(10)),
     text: newMessage,
     roomname: 'lobby'
   };
   this.renderMessage(message);   
   $('.chat').remove();
   this.fetch(); 
+};
+
+app.escape = function (string) {
+  // &, <, >, ", ', `, , !, @, $, %, (, ), =, +, {, }, [, and ]
+  string = string || '';
+  var newString = string.replace(/&/g, '&amp').replace(/</g, '&lt').replace(/>/g, '&gt').replace(/'/g, '&#x27').replace(/\//g, '&#x2F');
+  return newString;
 };
 
 app.handleUsernameClick = function(user) {
@@ -128,7 +136,9 @@ $(document).ready(function() {
   });
 
   $('#roomSelect').change(function(event) {
-    console.log(event);
+    app.selectedRoom = $('#roomSelect').val();
+    app.fetch();
+    // $('#room').val($('#roomSelect').val());
   });
 
   // $('[id=roomSelect] option').filter(function() {
